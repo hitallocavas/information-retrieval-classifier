@@ -3,10 +3,11 @@ import json
 import nltk, re, pprint
 from bs4 import BeautifulSoup
 import time
+import datetime
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import BernoulliNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import svm
 from sklearn.linear_model import LogisticRegression
@@ -30,14 +31,15 @@ texts = []
 statuses = []
 
 
-def process(subfolder):
-    directory = 'data/' + subfolder
+def process():
+    directory = 'data'
     for file in os.listdir(directory):
-        with open(directory + '/' + file) as json_file:
-            page = json.load(json_file)
-            text = process_text(page['content'])
-            texts.append(text)
-            statuses.append(page['status'])
+        with open(directory + '/' + file, encoding='utf-8') as json_file:
+            json_array = json.load(json_file)
+            for page in json_array:
+                text = process_text(page['content'])
+                texts.append(text)
+                statuses.append(1 if page['status'] == 'True' else 0)
 
 
 def process_text(text):
@@ -73,7 +75,7 @@ def bag_of_words():
 
 
 def naive_bayes(X_train, X_test, y_train, y_test):
-    classifier = GaussianNB()
+    classifier = BernoulliNB()
     classifier.fit(X_train, y_train)
 
     y_pred = classifier.predict(X_test)
@@ -100,7 +102,7 @@ def decision_trees(X_train, X_test, y_train, y_test):
 
 
 def logistic_regression(X_train, X_test, y_train, y_test):
-    classifier = LogisticRegression()
+    classifier = LogisticRegression(solver='lbfgs', max_iter=10000)
     classifier = classifier.fit(X_train, y_train)
 
     y_pred = classifier.predict(X_test)
@@ -128,15 +130,58 @@ def print_metrics(y_pred, y_test, classification_method):
     print('Recall: ' + str(recall))
 
 
-if __name__ == '__main__':
-    process('sambafoot')
-    X_train, X_test, y_train, y_test = bag_of_words()
+def run_naive_bayes( X_train, X_test, y_train, y_test):
+    first_time = datetime.datetime.now()
     naive_bayes(X_train, X_test, y_train, y_test)
-    time.sleep(120)
+    later_time = datetime.datetime.now()
+    difference = later_time - first_time
+    print('Tempo Naive Bayes: ' + str(difference.microseconds) + ' segundos')
+
+
+def run_decision_three( X_train, X_test, y_train, y_test):
+    first_time = datetime.datetime.now()
     decision_trees(X_train, X_test, y_train, y_test)
-    time.sleep(120)
+    later_time = datetime.datetime.now()
+    difference = later_time - first_time
+    print('Tempo Arvore de Decisão: ' + str(difference.microseconds) + ' segundos')
+
+
+def run_svm( X_train, X_test, y_train, y_test):
+    first_time = datetime.datetime.now()
     support_vector_machine(X_train, X_test, y_train, y_test)
-    time.sleep(120)
-    logistic_regression(X_train, X_test, y_train, y_test)
-    time.sleep(120)
+    later_time = datetime.datetime.now()
+    difference = later_time - first_time
+    print('Tempo SVM: ' + str(difference.microseconds) + ' segundos')
+
+
+def run_multi_layer_perceptron( X_train, X_test, y_train, y_test):
+    first_time = datetime.datetime.now()
     multilayer_perceptron(X_train, X_test, y_train, y_test)
+    later_time = datetime.datetime.now()
+    difference = later_time - first_time
+    print('Tempo MultiLayerPerceptron: ' + str(difference.microseconds) + ' segundos')
+
+
+def run_logistic_regression( X_train, X_test, y_train, y_test):
+    first_time = datetime.datetime.now()
+    logistic_regression(X_train, X_test, y_train, y_test)
+    later_time = datetime.datetime.now()
+    difference = later_time - first_time
+    print('Tempo Regressão Logística: ' + str(difference.microseconds) + ' segundos')
+
+
+if __name__ == '__main__':
+
+    process()
+
+    X_train, X_test, y_train, y_test = bag_of_words()
+
+    run_naive_bayes( X_train, X_test, y_train, y_test)
+
+    run_decision_three( X_train, X_test, y_train, y_test)
+
+    run_svm(X_train, X_test, y_train, y_test)
+
+    run_multi_layer_perceptron(X_train, X_test, y_train, y_test)
+
+    run_logistic_regression(X_train, X_test, y_train, y_test)
